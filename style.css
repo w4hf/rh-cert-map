@@ -506,7 +506,14 @@ html:not(.pf-v6-theme-dark) .cert-input {
 }
 
 .product-row {
-    margin-bottom: var(--pf-t--global--spacer--lg);
+    margin-bottom: var(--pf-t--global--spacer--md);
+    padding-bottom: var(--pf-t--global--spacer--md);
+    border-bottom: 1px solid var(--pf-t--global--border--color--default);
+}
+
+.product-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
 }
 
 .product-label {
@@ -556,7 +563,7 @@ html:not(.pf-v6-theme-dark) .cert-input {
 .level-label {
     text-anchor: middle;
     font-family: var(--pf-t--global--font--family--body);
-    font-size: 11px;
+    font-size: 10px;
     fill: var(--pf-t--global--text--color--subtle);
     transition: fill 300ms ease;
 }
@@ -592,6 +599,50 @@ html:not(.pf-v6-theme-dark) .cert-input {
 
 .arrowhead.achieved {
     fill: #ee0000;
+}
+
+/* Meta-credential nodes (Engineer, Architect) - badge shape */
+.level-node.meta {
+    fill: var(--pf-t--global--background--color--primary--default);
+    stroke: var(--pf-t--global--border--color--default);
+}
+
+.level-node.meta.achieved {
+    fill: #ee0000;
+    stroke: #cc0000;
+    animation: badgeGlow 2.5s ease-in-out infinite;
+}
+
+.level-node.meta.not-achieved {
+    fill: var(--pf-t--global--background--color--primary--default);
+    stroke: var(--pf-t--global--border--color--default);
+}
+
+@keyframes badgeGlow {
+    0% {
+        fill: #ee0000;
+        filter: drop-shadow(0 0 2px rgba(238, 0, 0, 0.3));
+    }
+    25% {
+        fill: #ff2a2a;
+        filter: drop-shadow(0 0 6px rgba(238, 0, 0, 0.6));
+    }
+    50% {
+        fill: #ff4444;
+        filter: drop-shadow(0 0 10px rgba(255, 68, 68, 0.8));
+    }
+    75% {
+        fill: #ff2a2a;
+        filter: drop-shadow(0 0 6px rgba(238, 0, 0, 0.6));
+    }
+    100% {
+        fill: #ee0000;
+        filter: drop-shadow(0 0 2px rgba(238, 0, 0, 0.3));
+    }
+}
+
+.meta-badge-icon {
+    pointer-events: none;
 }
 
 /* ===========================================
@@ -839,5 +890,9 @@ html:not(.pf-v6-theme-dark) .cert-input {
 
     .product-label {
         font-size: 0.75rem;
+    }
+
+    .level-label {
+        font-size: 8px;
     }
 }

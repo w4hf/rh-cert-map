@@ -3,8 +3,9 @@
 
   // ── Data ──────────────────────────────────────────────────────────────────
 
-  // Rule types: "any" = pass any one, "all" = pass all, "threshold" = required + N specialist
-  function evaluateLevel(rule, p) {
+  // Rule types: "any" = pass any one, "all" = pass all, "meta" = requires other nodes achieved,
+  // "metaPlus" = requires nodes achieved + minimum specialist exams passed
+  function evaluateLevel(rule, p, nodeResults) {
     if (rule.type === "any") {
       const achieved = rule.codes.some((c) => p.has(c));
       return { achieved, progress: achieved ? 1 : 0 };
@@ -13,23 +14,36 @@
       const count = rule.codes.filter((c) => p.has(c)).length;
       return { achieved: count === rule.codes.length, progress: count / rule.codes.length };
     }
-    // "threshold": all required + minSpecialist from specialist pool
-    const reqCount = rule.required.filter((c) => p.has(c)).length;
-    const specCount = Math.min(rule.minSpecialist, rule.specialist.filter((c) => p.has(c)).length);
-    const needed = rule.required.length + rule.minSpecialist;
-    const achieved = reqCount === rule.required.length && specCount >= rule.minSpecialist;
-    return { achieved, progress: Math.min(1, (reqCount + specCount) / needed) };
+    if (rule.type === "meta") {
+      const total = rule.requires.length;
+      const done = rule.requires.filter((id) => nodeResults && nodeResults[id] && nodeResults[id].achieved).length;
+      return { achieved: done === total, progress: total > 0 ? done / total : 0 };
+    }
+    if (rule.type === "metaPlus") {
+      const reqDone = rule.requires.filter((id) => nodeResults && nodeResults[id] && nodeResults[id].achieved).length;
+      const specDone = Math.min(rule.minSpecialist, rule.specialist.filter((c) => p.has(c)).length);
+      const total = rule.requires.length + rule.minSpecialist;
+      const achieved = reqDone === rule.requires.length && specDone >= rule.minSpecialist;
+      return { achieved, progress: Math.min(1, (reqDone + specDone) / total) };
+    }
+    return { achieved: false, progress: 0 };
   }
 
   const PRODUCTS = [
     {
       name: "OpenShift",
-      levels: [
-        { name: "Technologist", rule: { type: "any", codes: ["EX180", "EX156"] }, hint: "Pass EX180 or EX156" },
-        { name: "System Administrator", rule: { type: "all", codes: ["EX280"] }, hint: "Pass EX280" },
-        { name: "Engineer", rule: { type: "all", codes: ["EX280", "EX380"] }, hint: "Pass EX280 + EX380" },
-        { name: "Specialist", rule: { type: "any", codes: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX229", "EX480"] }, hint: "Pass any specialist exam (EX316, EX336, EX370, EX430, EX432, EX229, or EX480)" },
-        { name: "Architect", rule: { type: "threshold", required: ["EX280", "EX380"], specialist: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX229", "EX480"], minSpecialist: 3 }, hint: "Pass EX280 + EX380 + at least 3 specialist exams" },
+      nodes: [
+        { id: "tech", name: "Technologist", col: 0, row: "center", type: "credential", rule: { type: "any", codes: ["EX180", "EX156"] }, hint: "Pass EX180 or EX156" },
+        { id: "sysadm", name: "System Administrator", col: 1, row: "upper", type: "credential", rule: { type: "all", codes: ["EX280"] }, hint: "Pass EX280" },
+        { id: "advsysadm", name: "Advanced System Administrator", col: 1, row: "lower", type: "credential", rule: { type: "all", codes: ["EX380"] }, hint: "Pass EX380" },
+        { id: "engineer", name: "Engineer", col: 2, row: "upper", type: "meta", rule: { type: "meta", requires: ["sysadm", "advsysadm"] }, hint: "Achieve System Administrator + Advanced System Administrator" },
+        { id: "specialist", name: "Specialist", col: 2, row: "lower", type: "credential", rule: { type: "any", codes: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX229", "EX480"] }, hint: "Pass any specialist exam" },
+        { id: "architect", name: "Architect", col: 3, row: "center", type: "meta", rule: { type: "metaPlus", requires: ["engineer"], specialist: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX229", "EX480"], minSpecialist: 3 }, hint: "Achieve Engineer + pass at least 3 specialist exams" },
+      ],
+      edges: [
+        ["tech", "sysadm"], ["tech", "advsysadm"],
+        ["sysadm", "engineer"], ["advsysadm", "engineer"],
+        ["engineer", "architect"], ["specialist", "architect"],
       ],
       exams: [
         { code: "EX180", name: "Red Hat Certified Technologist in OpenShift" },
@@ -47,11 +61,16 @@
     },
     {
       name: "Enterprise Linux",
-      levels: [
-        { name: "System Administrator", rule: { type: "all", codes: ["EX200"] }, hint: "Pass EX200 (RHCSA)" },
-        { name: "Engineer", rule: { type: "all", codes: ["EX200", "EX342"] }, hint: "Pass EX200 + EX342" },
-        { name: "Specialist", rule: { type: "any", codes: ["EX210", "EX260", "EX358", "EX362", "EX403", "EX415", "EX436", "EX442"] }, hint: "Pass any specialist exam (EX210, EX260, EX358, EX362, EX403, EX415, EX436, or EX442)" },
-        { name: "Architect", rule: { type: "threshold", required: ["EX200", "EX342"], specialist: ["EX210", "EX260", "EX358", "EX362", "EX403", "EX415", "EX436", "EX442"], minSpecialist: 3 }, hint: "Pass EX200 + EX342 + at least 3 specialist exams" },
+      nodes: [
+        { id: "sysadm", name: "System Administrator", col: 0, row: "upper", type: "credential", rule: { type: "all", codes: ["EX200"] }, hint: "Pass EX200 (RHCSA)" },
+        { id: "advsysadm", name: "Advanced System Administrator", col: 0, row: "lower", type: "credential", rule: { type: "all", codes: ["EX342"] }, hint: "Pass EX342" },
+        { id: "engineer", name: "Engineer", col: 1, row: "upper", type: "meta", rule: { type: "meta", requires: ["sysadm", "advsysadm"] }, hint: "Achieve System Administrator + Advanced System Administrator" },
+        { id: "specialist", name: "Specialist", col: 1, row: "lower", type: "credential", rule: { type: "any", codes: ["EX210", "EX260", "EX358", "EX362", "EX403", "EX415", "EX436", "EX442"] }, hint: "Pass any specialist exam" },
+        { id: "architect", name: "Architect", col: 2, row: "center", type: "meta", rule: { type: "metaPlus", requires: ["engineer"], specialist: ["EX210", "EX260", "EX358", "EX362", "EX403", "EX415", "EX436", "EX442"], minSpecialist: 3 }, hint: "Achieve Engineer + pass at least 3 specialist exams" },
+      ],
+      edges: [
+        ["sysadm", "engineer"], ["advsysadm", "engineer"],
+        ["engineer", "architect"], ["specialist", "architect"],
       ],
       exams: [
         { code: "EX200", name: "Red Hat Certified System Administrator (RHCSA)" },
@@ -68,11 +87,16 @@
     },
     {
       name: "Ansible",
-      levels: [
-        { name: "System Administrator", rule: { type: "all", codes: ["EX200"] }, hint: "Pass EX200 (RHCSA)" },
-        { name: "Engineer", rule: { type: "all", codes: ["EX200", "EX294"] }, hint: "Pass EX200 + EX294" },
-        { name: "Specialist", rule: { type: "any", codes: ["EX374", "EX417", "EX457", "EX467"] }, hint: "Pass any specialist exam (EX374, EX417, EX457, or EX467)" },
-        { name: "Architect", rule: { type: "threshold", required: ["EX200", "EX294"], specialist: ["EX374", "EX417", "EX457", "EX467"], minSpecialist: 3 }, hint: "Pass EX200 + EX294 + at least 3 specialist exams" },
+      nodes: [
+        { id: "sysadm", name: "System Administrator", col: 0, row: "upper", type: "credential", rule: { type: "all", codes: ["EX200"] }, hint: "Pass EX200 (RHCSA)" },
+        { id: "advsysadm", name: "Advanced System Administrator", col: 0, row: "lower", type: "credential", rule: { type: "all", codes: ["EX294"] }, hint: "Pass EX294" },
+        { id: "engineer", name: "Engineer", col: 1, row: "upper", type: "meta", rule: { type: "meta", requires: ["sysadm", "advsysadm"] }, hint: "Achieve System Administrator + Advanced System Administrator" },
+        { id: "specialist", name: "Specialist", col: 1, row: "lower", type: "credential", rule: { type: "any", codes: ["EX374", "EX417", "EX457", "EX467"] }, hint: "Pass any specialist exam" },
+        { id: "architect", name: "Architect", col: 2, row: "center", type: "meta", rule: { type: "metaPlus", requires: ["engineer"], specialist: ["EX374", "EX417", "EX457", "EX467"], minSpecialist: 3 }, hint: "Achieve Engineer + pass at least 3 specialist exams" },
+      ],
+      edges: [
+        ["sysadm", "engineer"], ["advsysadm", "engineer"],
+        ["engineer", "architect"], ["specialist", "architect"],
       ],
       exams: [
         { code: "EX200", name: "Red Hat Certified System Administrator (RHCSA)" },
@@ -85,11 +109,16 @@
     },
     {
       name: "Cloud-Native Applications",
-      levels: [
-        { name: "Developer", rule: { type: "all", codes: ["EX188"] }, hint: "Pass EX188" },
-        { name: "Engineer", rule: { type: "all", codes: ["EX188", "EX288"] }, hint: "Pass EX188 + EX288" },
-        { name: "Specialist", rule: { type: "any", codes: ["EX183", "EX221", "EX240", "EX248", "EX328", "EX378", "EX482"] }, hint: "Pass any specialist exam (EX183, EX221, EX240, EX248, EX328, EX378, or EX482)" },
-        { name: "Architect", rule: { type: "threshold", required: ["EX188", "EX288"], specialist: ["EX183", "EX221", "EX240", "EX248", "EX328", "EX378", "EX482"], minSpecialist: 3 }, hint: "Pass EX188 + EX288 + at least 3 specialist exams" },
+      nodes: [
+        { id: "dev", name: "Developer", col: 0, row: "upper", type: "credential", rule: { type: "all", codes: ["EX188"] }, hint: "Pass EX188" },
+        { id: "advdev", name: "Advanced Developer", col: 0, row: "lower", type: "credential", rule: { type: "all", codes: ["EX288"] }, hint: "Pass EX288" },
+        { id: "engineer", name: "Engineer", col: 1, row: "upper", type: "meta", rule: { type: "meta", requires: ["dev", "advdev"] }, hint: "Achieve Developer + Advanced Developer" },
+        { id: "specialist", name: "Specialist", col: 1, row: "lower", type: "credential", rule: { type: "any", codes: ["EX183", "EX221", "EX240", "EX248", "EX328", "EX378", "EX482"] }, hint: "Pass any specialist exam" },
+        { id: "architect", name: "Architect", col: 2, row: "center", type: "meta", rule: { type: "metaPlus", requires: ["engineer"], specialist: ["EX183", "EX221", "EX240", "EX248", "EX328", "EX378", "EX482"], minSpecialist: 3 }, hint: "Achieve Engineer + pass at least 3 specialist exams" },
+      ],
+      edges: [
+        ["dev", "engineer"], ["advdev", "engineer"],
+        ["engineer", "architect"], ["specialist", "architect"],
       ],
       exams: [
         { code: "EX188", name: "Red Hat Certified Developer in Cloud-native Applications" },
@@ -105,14 +134,24 @@
     },
     {
       name: "AI",
-      levels: [
-        { name: "Developer", rule: { type: "all", codes: ["EX267"] }, hint: "Pass EX267" },
+      nodes: [
+        { id: "dev", name: "Developer", col: 0, row: "center", type: "credential", rule: { type: "all", codes: ["EX267"] }, hint: "Pass EX267" },
       ],
+      edges: [],
       exams: [
         { code: "EX267", name: "Red Hat Certified Developer in AI" },
       ],
     },
   ];
+
+  // Evaluate all nodes for a product in topological order
+  function evaluateProduct(product, p) {
+    const results = {};
+    for (const node of product.nodes) {
+      results[node.id] = evaluateLevel(node.rule, p, results);
+    }
+    return results;
+  }
 
   // Pre-computed deduped list of all exams across products
   const ALL_EXAMS = (() => {
@@ -129,11 +168,22 @@
     return list;
   })();
 
-  // Derive codes array from rule for tooltip display
-  function getLevelCodes(lvl) {
-    const r = lvl.rule;
-    if (r.type === "threshold") return [...r.required, ...r.specialist];
-    return r.codes;
+  // Derive codes array from a node's rule for tooltip display
+  function getNodeCodes(node, product) {
+    const r = node.rule;
+    if (r.type === "meta") {
+      const codes = [];
+      for (const reqId of r.requires) {
+        const reqNode = product.nodes.find((n) => n.id === reqId);
+        if (reqNode) codes.push(...getNodeCodes(reqNode, product));
+      }
+      return codes;
+    }
+    if (r.type === "metaPlus") {
+      return r.specialist || [];
+    }
+    if (r.codes) return r.codes;
+    return [];
   }
 
   const STORAGE_KEY = "redhat-cert-map-passed";
@@ -168,13 +218,15 @@
 
   const renderedCheckboxes = new Map();
 
-  const LEVEL_ORDER = ["Technologist", "Developer", "System Administrator", "Engineer", "Specialist"];
+  const LEVEL_ORDER = ["Technologist", "Developer", "Advanced Developer", "System Administrator", "Advanced System Administrator", "Engineer", "Specialist"];
 
   function getExamLevel(examName) {
     const lower = examName.toLowerCase();
     if (lower.includes("technologist")) return "Technologist";
     if (lower.includes("specialist")) return "Specialist";
+    if (lower.includes("advanced") && lower.includes("system administrator")) return "Advanced System Administrator";
     if (lower.includes("system administrator")) return "System Administrator";
+    if (lower.includes("advanced") && lower.includes("developer")) return "Advanced Developer";
     if (lower.includes("developer")) return "Developer";
     return "Specialist";
   }
@@ -356,19 +408,54 @@
     const narrow = window.innerWidth <= 600;
     return {
       nodeRadius: narrow ? 10 : 14,
-      rowHeight: narrow ? 78 : 92,
-      paddingLeft: narrow ? 40 : 60,
-      paddingRight: narrow ? 40 : 60,
-      nodeY: narrow ? 22 : 28,
-      labelOffsetY: narrow ? 26 : 32,
+      rowHeight: narrow ? 170 : 195,
+      paddingLeft: narrow ? 50 : 70,
+      paddingRight: narrow ? 50 : 70,
+      upperY: narrow ? 28 : 35,
+      lowerY: narrow ? 100 : 120,
+      centerY: narrow ? 60 : 74,
+      labelOffsetY: narrow ? 18 : 20,
       checkScale: narrow ? 0.7 : 1,
       arrowSize: narrow ? 4 : 5,
-      hoverWidth: narrow ? 24 : 18,
       hoverExtra: narrow ? 12 : 4,
     };
   }
 
-  // Stores references to mutable SVG elements for incremental updates
+  function getNodeY(node, s) {
+    if (node.row === "upper") return s.upperY;
+    if (node.row === "lower") return s.lowerY;
+    return s.centerY;
+  }
+
+  // Scalloped badge outline path (wavy circle with ribbon tails)
+  function createBadgeOutline(cx, cy, r) {
+    const bumps = 12;
+    const outerR = r;
+    const innerR = r * 0.82;
+    let d = "";
+    for (let i = 0; i < bumps; i++) {
+      const a1 = (Math.PI * 2 * i) / bumps - Math.PI / 2;
+      const a2 = (Math.PI * 2 * (i + 0.5)) / bumps - Math.PI / 2;
+      const a3 = (Math.PI * 2 * (i + 1)) / bumps - Math.PI / 2;
+      const ox = cx + outerR * Math.cos(a1);
+      const oy = cy + outerR * Math.sin(a1);
+      const ix = cx + innerR * Math.cos(a2);
+      const iy = cy + innerR * Math.sin(a2);
+      const nx = cx + outerR * Math.cos(a3);
+      const ny = cy + outerR * Math.sin(a3);
+      if (i === 0) d += `M${ox.toFixed(1)},${oy.toFixed(1)}`;
+      d += ` Q${ix.toFixed(1)},${iy.toFixed(1)} ${nx.toFixed(1)},${ny.toFixed(1)}`;
+    }
+    d += " Z";
+    // Ribbon tails
+    const rw = r * 0.35;
+    const rh = r * 0.7;
+    const ry = cy + outerR * 0.6;
+    d += ` M${cx - rw * 1.8},${ry} L${cx - rw * 2.2},${ry + rh} L${cx - rw * 0.8},${ry + rh * 0.65} Z`;
+    d += ` M${cx + rw * 1.8},${ry} L${cx + rw * 2.2},${ry + rh} L${cx + rw * 0.8},${ry + rh * 0.65} Z`;
+    return d;
+  }
+
   let mapRefs = null;
 
   function buildMap() {
@@ -376,7 +463,7 @@
     const s = getMapSizes();
     mapRefs = [];
 
-    PRODUCTS.forEach((product, pIdx) => {
+    PRODUCTS.forEach((product) => {
       const row = document.createElement("div");
       row.className = "product-row";
 
@@ -385,125 +472,162 @@
       label.textContent = product.name;
       row.appendChild(label);
 
-      const levelCount = product.levels.length;
-      if (levelCount === 0) return;
+      const nodes = product.nodes;
+      if (nodes.length === 0) return;
 
+      const maxCol = Math.max(...nodes.map((n) => n.col));
       const containerWidth = mapEl.clientWidth || 600;
       const usable = containerWidth - s.paddingLeft - s.paddingRight;
-      const maxGap = 450;
-      const gap = levelCount > 1 ? Math.min(usable / (levelCount - 1), maxGap) : 0;
-      const svgWidth = levelCount > 1
-        ? s.paddingLeft + gap * (levelCount - 1) + s.paddingRight
-        : containerWidth;
+      const gap = maxCol > 0 ? usable / maxCol : 0;
+      const svgWidth = containerWidth;
+
+      const hasTwoRows = nodes.some((n) => n.row === "upper") && nodes.some((n) => n.row === "lower");
+      const svgHeight = hasTwoRows ? s.rowHeight : (s.centerY + s.labelOffsetY + 50);
 
       const svg = document.createElementNS(SVG_NS, "svg");
-      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${s.rowHeight}`);
-      svg.setAttribute("height", s.rowHeight);
+      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+      svg.setAttribute("height", svgHeight);
       svg.setAttribute("role", "img");
       svg.setAttribute("aria-label", `${product.name} certification track`);
 
-      const productRef = { connectors: [], arrows: [], levels: [] };
+      const nodePositions = {};
+      nodes.forEach((node) => {
+        const cx = s.paddingLeft + node.col * gap;
+        const cy = getNodeY(node, s);
+        nodePositions[node.id] = { cx, cy };
+      });
 
-      for (let i = 0; i < levelCount - 1; i++) {
-        const x1 = s.paddingLeft + i * gap + s.nodeRadius;
-        const x2 = s.paddingLeft + (i + 1) * gap - s.nodeRadius;
+      const productRef = { edges: [], nodes: {} };
 
-        const line = document.createElementNS(SVG_NS, "line");
-        line.setAttribute("x1", x1);
-        line.setAttribute("y1", s.nodeY);
-        line.setAttribute("x2", x2);
-        line.setAttribute("y2", s.nodeY);
-        line.setAttribute("stroke-width", "2");
-        line.classList.add("level-connector");
-        svg.appendChild(line);
-        productRef.connectors.push(line);
+      // Draw edges as orthogonal paths with rounded corners
+      product.edges.forEach(([fromId, toId]) => {
+        const from = nodePositions[fromId];
+        const to = nodePositions[toId];
+        if (!from || !to) return;
 
-        const mx = (x1 + x2) / 2;
+        const x1 = from.cx + s.nodeRadius;
+        const x2 = to.cx - s.nodeRadius;
+        const y1 = from.cy;
+        const y2 = to.cy;
+
+        let pathD;
+        if (y1 === y2) {
+          pathD = `M${x1},${y1} L${x2},${y2}`;
+        } else {
+          const midX = (x1 + x2) / 2;
+          const r = Math.min(12, Math.abs(y2 - y1) / 2, Math.abs(midX - x1), Math.abs(x2 - midX));
+          const dy = y2 > y1 ? 1 : -1;
+          pathD = `M${x1},${y1} L${midX - r},${y1}` +
+            ` Q${midX},${y1} ${midX},${y1 + r * dy}` +
+            ` L${midX},${y2 - r * dy}` +
+            ` Q${midX},${y2} ${midX + r},${y2}` +
+            ` L${x2},${y2}`;
+        }
+
+        const path = document.createElementNS(SVG_NS, "path");
+        path.setAttribute("d", pathD);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke-width", "2");
+        path.classList.add("level-connector");
+        svg.appendChild(path);
+
+        const a = s.arrowSize;
         const arrow = document.createElementNS(SVG_NS, "polygon");
-        arrow.setAttribute(
-          "points",
-          `${mx + s.arrowSize},${s.nodeY} ${mx - s.arrowSize},${s.nodeY - s.arrowSize} ${mx - s.arrowSize},${s.nodeY + s.arrowSize}`
+        arrow.setAttribute("points",
+          `${x2},${y2} ${x2 - a * 2},${y2 - a} ${x2 - a * 2},${y2 + a}`
         );
         arrow.classList.add("arrowhead");
         svg.appendChild(arrow);
-        productRef.arrows.push(arrow);
 
-        const hoverLine = document.createElementNS(SVG_NS, "line");
-        hoverLine.setAttribute("x1", x1);
-        hoverLine.setAttribute("y1", s.nodeY);
-        hoverLine.setAttribute("x2", x2);
-        hoverLine.setAttribute("y2", s.nodeY);
-        hoverLine.setAttribute("stroke-width", s.hoverWidth);
-        hoverLine.classList.add("level-connector-hover");
-        const nextLevel = product.levels[i + 1];
-        hoverLine.addEventListener("mouseenter", (e) => showTooltip(e, nextLevel.hint));
-        hoverLine.addEventListener("mousemove", (e) => moveTooltip(e));
-        hoverLine.addEventListener("mouseleave", hideTooltip);
-        hoverLine.addEventListener("touchstart", (e) => {
-          e.preventDefault();
-          showTooltip(e.touches[0], nextLevel.hint);
-          setTimeout(hideTooltip, 2500);
-        }, { passive: false });
-        svg.appendChild(hoverLine);
-      }
+        productRef.edges.push({ line: path, arrow, fromId, toId });
+      });
 
-      product.levels.forEach((lvl, i) => {
-        const cx = s.paddingLeft + i * gap;
-        const clipId = `clip-${product.name.replace(/\s+/g, "")}-${i}`;
+      // Draw nodes
+      nodes.forEach((node) => {
+        const { cx, cy } = nodePositions[node.id];
+        const clipId = `clip-${product.name.replace(/\s+/g, "")}-${node.id}`;
 
-        const circle = document.createElementNS(SVG_NS, "circle");
-        circle.setAttribute("cx", cx);
-        circle.setAttribute("cy", s.nodeY);
-        circle.setAttribute("r", s.nodeRadius);
-        circle.setAttribute("stroke-width", "2.5");
-        circle.classList.add("level-node");
+        let circle;
+        if (node.type === "meta") {
+          circle = document.createElementNS(SVG_NS, "path");
+          circle.setAttribute("d", createBadgeOutline(cx, cy, s.nodeRadius + 2));
+          circle.setAttribute("stroke-width", "2");
+          circle.classList.add("level-node", "meta");
+        } else {
+          circle = document.createElementNS(SVG_NS, "circle");
+          circle.setAttribute("cx", cx);
+          circle.setAttribute("cy", cy);
+          circle.setAttribute("r", s.nodeRadius);
+          circle.setAttribute("stroke-width", "2.5");
+          circle.classList.add("level-node");
+        }
         const titleEl = document.createElementNS(SVG_NS, "title");
-        titleEl.textContent = `${product.name} — ${lvl.name}`;
+        titleEl.textContent = `${product.name} — ${node.name}`;
         circle.appendChild(titleEl);
         svg.appendChild(circle);
 
-        // Partial fill elements (always created, hidden when not needed)
-        const defs = document.createElementNS(SVG_NS, "defs");
-        const clipPath = document.createElementNS(SVG_NS, "clipPath");
-        clipPath.setAttribute("id", clipId);
-        const clipCircle = document.createElementNS(SVG_NS, "circle");
-        clipCircle.setAttribute("cx", cx);
-        clipCircle.setAttribute("cy", s.nodeY);
-        clipCircle.setAttribute("r", s.nodeRadius - 1.5);
-        clipPath.appendChild(clipCircle);
-        defs.appendChild(clipPath);
-        svg.appendChild(defs);
+        // Partial fill (only for credential nodes)
+        let fillRect = null;
+        if (node.type !== "meta") {
+          const defs = document.createElementNS(SVG_NS, "defs");
+          const clipPath = document.createElementNS(SVG_NS, "clipPath");
+          clipPath.setAttribute("id", clipId);
+          const clipCircle = document.createElementNS(SVG_NS, "circle");
+          clipCircle.setAttribute("cx", cx);
+          clipCircle.setAttribute("cy", cy);
+          clipCircle.setAttribute("r", s.nodeRadius - 1.5);
+          clipPath.appendChild(clipCircle);
+          defs.appendChild(clipPath);
+          svg.appendChild(defs);
 
-        const fillRect = document.createElementNS(SVG_NS, "rect");
-        fillRect.setAttribute("x", cx - s.nodeRadius);
-        fillRect.setAttribute("width", s.nodeRadius * 2);
-        fillRect.setAttribute("clip-path", `url(#${clipId})`);
-        fillRect.classList.add("partial-fill");
-        fillRect.style.display = "none";
-        svg.appendChild(fillRect);
+          fillRect = document.createElementNS(SVG_NS, "rect");
+          fillRect.setAttribute("x", cx - s.nodeRadius);
+          fillRect.setAttribute("width", s.nodeRadius * 2);
+          fillRect.setAttribute("clip-path", `url(#${clipId})`);
+          fillRect.classList.add("partial-fill");
+          fillRect.style.display = "none";
+          svg.appendChild(fillRect);
+        }
 
-        // Checkmark (always created, hidden when not needed)
-        const check = document.createElementNS(SVG_NS, "path");
+        // Icon: checkmark for credential, checkmark inside badge for meta
+        let icon;
         const sc = s.checkScale;
-        check.setAttribute(
-          "d",
-          `M${cx - 5 * sc} ${s.nodeY + 1 * sc} L${cx - 1 * sc} ${s.nodeY + 5 * sc} L${cx + 6 * sc} ${s.nodeY - 4 * sc}`
-        );
-        check.setAttribute("fill", "none");
-        check.setAttribute("stroke", "#fff");
-        check.setAttribute("stroke-width", 2.5 * sc);
-        check.setAttribute("stroke-linecap", "round");
-        check.setAttribute("stroke-linejoin", "round");
-        check.style.display = "none";
-        svg.appendChild(check);
+        if (node.type === "meta") {
+          icon = document.createElementNS(SVG_NS, "path");
+          icon.setAttribute("d",
+            `M${cx - 5 * sc} ${cy + 1 * sc} L${cx - 1 * sc} ${cy + 5 * sc} L${cx + 6 * sc} ${cy - 4 * sc}`
+          );
+          icon.setAttribute("fill", "none");
+          icon.setAttribute("stroke", "#fff");
+          icon.setAttribute("stroke-width", 2.5 * sc);
+          icon.setAttribute("stroke-linecap", "round");
+          icon.setAttribute("stroke-linejoin", "round");
+          icon.style.display = "none";
+          icon.classList.add("meta-badge-icon");
+        } else {
+          icon = document.createElementNS(SVG_NS, "path");
+          icon.setAttribute("d",
+            `M${cx - 5 * sc} ${cy + 1 * sc} L${cx - 1 * sc} ${cy + 5 * sc} L${cx + 6 * sc} ${cy - 4 * sc}`
+          );
+          icon.setAttribute("fill", "none");
+          icon.setAttribute("stroke", "#fff");
+          icon.setAttribute("stroke-width", 2.5 * sc);
+          icon.setAttribute("stroke-linecap", "round");
+          icon.setAttribute("stroke-linejoin", "round");
+          icon.style.display = "none";
+        }
+        svg.appendChild(icon);
 
         // Label text
         const text = document.createElementNS(SVG_NS, "text");
+        const labelY = node.type === "meta"
+          ? cy + s.nodeRadius + s.labelOffsetY + 10
+          : cy + s.nodeRadius + s.labelOffsetY;
         text.setAttribute("x", cx);
-        text.setAttribute("y", s.nodeY + s.labelOffsetY);
+        text.setAttribute("y", labelY);
         text.classList.add("level-label");
 
-        const words = lvl.name.split(" ");
+        const words = node.name.split(" ");
         if (words.length > 1) {
           const mid = Math.ceil(words.length / 2);
           const tspan1 = document.createElementNS(SVG_NS, "tspan");
@@ -517,7 +641,7 @@
           text.appendChild(tspan1);
           text.appendChild(tspan2);
         } else {
-          text.textContent = lvl.name;
+          text.textContent = node.name;
         }
 
         const tspanPartial = document.createElementNS(SVG_NS, "tspan");
@@ -526,28 +650,27 @@
         tspanPartial.textContent = "(in progress)";
         tspanPartial.style.display = "none";
         text.appendChild(tspanPartial);
-
         svg.appendChild(text);
 
         // Hover target
         const hoverCircle = document.createElementNS(SVG_NS, "circle");
         hoverCircle.setAttribute("cx", cx);
-        hoverCircle.setAttribute("cy", s.nodeY);
+        hoverCircle.setAttribute("cy", cy);
         hoverCircle.setAttribute("r", s.nodeRadius + s.hoverExtra);
         hoverCircle.setAttribute("fill", "transparent");
         hoverCircle.setAttribute("stroke", "none");
         hoverCircle.style.cursor = "pointer";
-        hoverCircle.addEventListener("mouseenter", (e) => showTooltip(e, buildCircleTooltip(lvl, product)));
+        hoverCircle.addEventListener("mouseenter", (e) => showTooltip(e, buildCircleTooltip(node, product)));
         hoverCircle.addEventListener("mousemove", (e) => moveTooltip(e));
         hoverCircle.addEventListener("mouseleave", hideTooltip);
         hoverCircle.addEventListener("touchstart", (e) => {
           e.preventDefault();
-          showTooltip(e.touches[0], buildCircleTooltip(lvl, product));
+          showTooltip(e.touches[0], buildCircleTooltip(node, product));
           setTimeout(hideTooltip, 3000);
         }, { passive: false });
         svg.appendChild(hoverCircle);
 
-        productRef.levels.push({ circle, fillRect, check, text, tspanPartial, nodeY: s.nodeY, nodeRadius: s.nodeRadius });
+        productRef.nodes[node.id] = { circle, fillRect, icon, text, tspanPartial, cy, nodeRadius: s.nodeRadius, type: node.type };
       });
 
       row.appendChild(svg);
@@ -564,44 +687,48 @@
     PRODUCTS.forEach((product, pIdx) => {
       const ref = mapRefs[pIdx];
       if (!ref) return;
-      const evaluations = product.levels.map((lvl) => evaluateLevel(lvl.rule, passedExams));
 
-      // Update connectors and arrows
-      for (let i = 0; i < ref.connectors.length; i++) {
-        const both = evaluations[i].achieved && evaluations[i + 1].achieved;
-        ref.connectors[i].classList.toggle("achieved", both);
-        ref.arrows[i].classList.toggle("achieved", both);
-      }
+      const results = evaluateProduct(product, passedExams);
 
-      // Update level nodes
-      evaluations.forEach((ev, i) => {
-        const lRef = ref.levels[i];
+      // Update edges
+      ref.edges.forEach(({ line, arrow, fromId, toId }) => {
+        const bothAchieved = results[fromId].achieved && results[toId].achieved;
+        line.classList.toggle("achieved", bothAchieved);
+        arrow.classList.toggle("achieved", bothAchieved);
+      });
+
+      // Update nodes
+      product.nodes.forEach((node) => {
+        const nRef = ref.nodes[node.id];
+        if (!nRef) return;
+        const ev = results[node.id];
         const isPartial = !ev.achieved && ev.progress > 0 && ev.progress < 1;
 
-        lRef.circle.classList.toggle("achieved", ev.achieved);
-        lRef.circle.classList.toggle("partial", isPartial);
-        lRef.circle.classList.toggle("not-achieved", !ev.achieved && !isPartial);
+        nRef.circle.classList.toggle("achieved", ev.achieved);
+        nRef.circle.classList.toggle("partial", isPartial);
+        nRef.circle.classList.toggle("not-achieved", !ev.achieved && !isPartial);
 
-        // Partial fill
-        if (isPartial) {
-          const fillHeight = (lRef.nodeRadius * 2) * ev.progress;
-          const fillY = lRef.nodeY + lRef.nodeRadius - fillHeight;
-          lRef.fillRect.setAttribute("y", fillY);
-          lRef.fillRect.setAttribute("height", fillHeight);
-          lRef.fillRect.style.display = "";
-        } else {
-          lRef.fillRect.style.display = "none";
+        // Partial fill (credential nodes only)
+        if (nRef.fillRect) {
+          if (isPartial) {
+            const fillHeight = (nRef.nodeRadius * 2) * ev.progress;
+            const fillY = nRef.cy + nRef.nodeRadius - fillHeight;
+            nRef.fillRect.setAttribute("y", fillY);
+            nRef.fillRect.setAttribute("height", fillHeight);
+            nRef.fillRect.style.display = "";
+          } else {
+            nRef.fillRect.style.display = "none";
+          }
         }
 
-        // Checkmark
-        lRef.check.style.display = ev.achieved ? "" : "none";
+        // Icon display (checkmark shown when achieved)
+        nRef.icon.style.display = ev.achieved ? "" : "none";
 
         // Label classes
-        lRef.text.classList.toggle("achieved", ev.achieved);
-        lRef.text.classList.toggle("partial", isPartial);
+        nRef.text.classList.toggle("achieved", ev.achieved);
+        nRef.text.classList.toggle("partial", isPartial);
 
-        // "(in progress)" tspan
-        lRef.tspanPartial.style.display = isPartial ? "" : "none";
+        nRef.tspanPartial.style.display = isPartial ? "" : "none";
       });
     });
   }
@@ -622,33 +749,90 @@
     moveTooltip(e);
   }
 
-  function buildCircleTooltip(lvl, product) {
-    const codes = getLevelCodes(lvl);
-    const examMap = {};
-    product.exams.forEach((ex) => { examMap[ex.code] = ex.name; });
-
+  function buildCircleTooltip(node, product) {
     const frag = document.createDocumentFragment();
 
     const title = document.createElement("div");
     title.style.fontWeight = "600";
     title.style.marginBottom = "0.4em";
-    title.textContent = lvl.hint;
+    title.textContent = node.hint;
     frag.appendChild(title);
 
-    if (codes.length > 0) {
+    const ruleType = node.rule.type;
+
+    if (ruleType === "meta") {
       const list = document.createElement("div");
       list.style.fontSize = "0.82em";
-      codes.forEach((code) => {
+      const results = evaluateProduct(product, passedExams);
+      node.rule.requires.forEach((reqId) => {
+        const reqNode = product.nodes.find((n) => n.id === reqId);
+        if (!reqNode) return;
         const row = document.createElement("div");
         row.style.padding = "0.15em 0";
-        const passed = passedExams.has(code);
-        const icon = passed ? "\u2705" : "\u274c";
-        const name = examMap[code] || code;
-        row.textContent = `${icon} ${code} — ${name}`;
-        if (!passed) row.style.opacity = "0.6";
+        const done = results[reqId].achieved;
+        const icon = done ? "\u2705" : "\u274c";
+        row.textContent = `${icon} ${reqNode.name}`;
+        if (!done) row.style.opacity = "0.6";
         list.appendChild(row);
       });
       frag.appendChild(list);
+    } else if (ruleType === "metaPlus") {
+      const list = document.createElement("div");
+      list.style.fontSize = "0.82em";
+      const results = evaluateProduct(product, passedExams);
+      node.rule.requires.forEach((reqId) => {
+        const reqNode = product.nodes.find((n) => n.id === reqId);
+        if (!reqNode) return;
+        const row = document.createElement("div");
+        row.style.padding = "0.15em 0";
+        const done = results[reqId].achieved;
+        const icon = done ? "\u2705" : "\u274c";
+        row.textContent = `${icon} ${reqNode.name}`;
+        if (!done) row.style.opacity = "0.6";
+        list.appendChild(row);
+      });
+      const specPassed = node.rule.specialist.filter((c) => passedExams.has(c)).length;
+      const specRow = document.createElement("div");
+      specRow.style.padding = "0.15em 0";
+      const specDone = specPassed >= node.rule.minSpecialist;
+      const specIcon = specDone ? "\u2705" : "\u274c";
+      specRow.textContent = `${specIcon} Specialist exams (${specPassed}/${node.rule.minSpecialist})`;
+      if (!specDone) specRow.style.opacity = "0.6";
+      list.appendChild(specRow);
+
+      const examMap = {};
+      product.exams.forEach((ex) => { examMap[ex.code] = ex.name; });
+      node.rule.specialist.forEach((code) => {
+        const row = document.createElement("div");
+        row.style.padding = "0.1em 0 0.1em 1em";
+        const passed = passedExams.has(code);
+        const icon = passed ? "\u2705" : "\u2B1C";
+        const name = examMap[code] || code;
+        row.textContent = `${icon} ${code} — ${name}`;
+        if (!passed) row.style.opacity = "0.5";
+        row.style.fontSize = "0.9em";
+        list.appendChild(row);
+      });
+      frag.appendChild(list);
+    } else {
+      const codes = getNodeCodes(node, product);
+      if (codes.length > 0) {
+        const examMap = {};
+        product.exams.forEach((ex) => { examMap[ex.code] = ex.name; });
+        const list = document.createElement("div");
+        list.style.fontSize = "0.82em";
+        codes.forEach((code) => {
+          const row = document.createElement("div");
+          row.style.padding = "0.15em 0";
+          const passed = passedExams.has(code);
+          const icon = passed ? "\u2705" : "\u274c";
+          const name = examMap[code] || code;
+          row.textContent = `${icon} ${code} — ${name}`;
+          if (!passed) row.style.opacity = "0.6";
+          list.appendChild(row);
+        });
+        frag.appendChild(list);
+      }
     }
 
     return frag;
@@ -1115,10 +1299,11 @@
       const credNorm = normalizeCredName(cred.name || "");
       for (const product of PRODUCTS) {
         const productNorm = product.name.toLowerCase();
-        for (const lvl of product.levels) {
-          const levelNorm = lvl.name.toLowerCase();
-          if (credNorm.includes(levelNorm) && credNorm.includes(productNorm)) {
-            if (evaluateLevel(lvl.rule, passedExams).achieved) return false;
+        const results = evaluateProduct(product, passedExams);
+        for (const node of product.nodes) {
+          const nodeNorm = node.name.toLowerCase();
+          if (credNorm.includes(nodeNorm) && credNorm.includes(productNorm)) {
+            if (results[node.id].achieved) return false;
           }
         }
       }
