@@ -1085,12 +1085,16 @@
       if (exactMatch) { matched.add(exactMatch.code); continue; }
 
       const credRole = extractRole(credNorm);
+      const credWords = wordSet(credNorm);
       let bestMatch = null;
       let bestScore = 0;
       for (const exam of ALL_EXAMS) {
         const examNorm = normalizeCredName(exam.name);
         const examRole = extractRole(examNorm);
         if (credRole && examRole && credRole !== examRole) continue;
+        const examWords = wordSet(examNorm);
+        const allExamWordsInCred = [...examWords].every((w) => credWords.has(w));
+        if (!allExamWordsInCred) continue;
         const score = wordOverlap(credNorm, examNorm);
         if (score >= 0.7 && score > bestScore) {
           bestScore = score;
