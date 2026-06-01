@@ -591,10 +591,6 @@ html:not(.pf-v6-theme-dark) .cert-input {
     stroke: #ee0000;
 }
 
-.level-connector-hover {
-    stroke: transparent;
-    cursor: help;
-}
 
 .arrowhead {
     fill: var(--pf-t--global--border--color--default);
@@ -606,11 +602,6 @@ html:not(.pf-v6-theme-dark) .cert-input {
 }
 
 /* Meta-credential nodes (Engineer, Architect) - badge shape */
-.level-node.meta {
-    fill: var(--pf-t--global--background--color--primary--default);
-    stroke: var(--pf-t--global--border--color--default);
-}
-
 .level-node.meta.achieved {
     fill: #ee0000;
     stroke: #cc0000;
@@ -621,11 +612,6 @@ html:not(.pf-v6-theme-dark) .cert-input {
     fill: #d4a017;
     stroke: #b8860b;
     animation: badgeGlowGold 2.5s ease-in-out infinite;
-}
-
-.level-node.meta.not-achieved {
-    fill: var(--pf-t--global--background--color--primary--default);
-    stroke: var(--pf-t--global--border--color--default);
 }
 
 @keyframes badgeGlow {

@@ -231,10 +231,6 @@
     return "Specialist";
   }
 
-  function getAllExams() {
-    return ALL_EXAMS;
-  }
-
   function sortExams(exams) {
     return [...exams].sort((a, b) => {
       const cmp = a.code.localeCompare(b.code);
@@ -333,7 +329,7 @@
         }
       });
     } else {
-      const allExams = sortExams(getAllExams());
+      const allExams = sortExams(ALL_EXAMS);
       const wrap = document.createElement("div");
       wrap.className = "group-exams";
       allExams.forEach((exam) => {
@@ -590,33 +586,19 @@
           svg.appendChild(fillRect);
         }
 
-        // Icon: checkmark for credential, checkmark inside badge for meta
-        let icon;
+        // Checkmark icon (shown when achieved)
         const sc = s.checkScale;
-        if (node.type === "meta") {
-          icon = document.createElementNS(SVG_NS, "path");
-          icon.setAttribute("d",
-            `M${cx - 5 * sc} ${cy + 1 * sc} L${cx - 1 * sc} ${cy + 5 * sc} L${cx + 6 * sc} ${cy - 4 * sc}`
-          );
-          icon.setAttribute("fill", "none");
-          icon.setAttribute("stroke", "#fff");
-          icon.setAttribute("stroke-width", 2.5 * sc);
-          icon.setAttribute("stroke-linecap", "round");
-          icon.setAttribute("stroke-linejoin", "round");
-          icon.style.display = "none";
-          icon.classList.add("meta-badge-icon");
-        } else {
-          icon = document.createElementNS(SVG_NS, "path");
-          icon.setAttribute("d",
-            `M${cx - 5 * sc} ${cy + 1 * sc} L${cx - 1 * sc} ${cy + 5 * sc} L${cx + 6 * sc} ${cy - 4 * sc}`
-          );
-          icon.setAttribute("fill", "none");
-          icon.setAttribute("stroke", "#fff");
-          icon.setAttribute("stroke-width", 2.5 * sc);
-          icon.setAttribute("stroke-linecap", "round");
-          icon.setAttribute("stroke-linejoin", "round");
-          icon.style.display = "none";
-        }
+        const icon = document.createElementNS(SVG_NS, "path");
+        icon.setAttribute("d",
+          `M${cx - 5 * sc} ${cy + 1 * sc} L${cx - 1 * sc} ${cy + 5 * sc} L${cx + 6 * sc} ${cy - 4 * sc}`
+        );
+        icon.setAttribute("fill", "none");
+        icon.setAttribute("stroke", "#fff");
+        icon.setAttribute("stroke-width", 2.5 * sc);
+        icon.setAttribute("stroke-linecap", "round");
+        icon.setAttribute("stroke-linejoin", "round");
+        icon.style.display = "none";
+        if (node.type === "meta") icon.classList.add("meta-badge-icon");
         svg.appendChild(icon);
 
         // Label text
@@ -735,7 +717,6 @@
     });
   }
 
-  const renderMap = buildMap;
 
   // ── Tooltip ───────────────────────────────────────────────────────────────
 
@@ -861,7 +842,7 @@
   }
 
   document.addEventListener("touchstart", (e) => {
-    if (!e.target.closest(".level-connector-hover")) {
+    if (!e.target.closest("[style*='cursor']")) {
       hideTooltip();
     }
   });
@@ -871,7 +852,7 @@
   let resizeTimer;
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(renderMap, 150);
+    resizeTimer = setTimeout(buildMap, 150);
   });
 
   // ── Theme Toggle (PF6 pattern) ──────────────────────────────────────────
@@ -1096,22 +1077,12 @@
     for (const cred of credentials) {
       const credName = typeof cred === "string" ? cred : cred.name;
       const credNorm = normalizeCredName(credName);
-      let found = false;
 
       const aliasCode = CREDENTIAL_ALIASES[credNorm];
-      if (aliasCode) {
-        matched.add(aliasCode);
-        found = true;
-        continue;
-      }
+      if (aliasCode) { matched.add(aliasCode); continue; }
 
-      for (const exam of ALL_EXAMS) {
-        if (credNorm === normalizeCredName(exam.name)) {
-          matched.add(exam.code);
-          found = true;
-        }
-      }
-      if (found) continue;
+      const exactMatch = ALL_EXAMS.find((e) => credNorm === normalizeCredName(e.name));
+      if (exactMatch) { matched.add(exactMatch.code); continue; }
 
       const credRole = extractRole(credNorm);
       let bestMatch = null;
@@ -1341,6 +1312,11 @@
 
   verifyBtn.addEventListener("click", async () => {
     const certId = certIdInput.value;
+    if (certId) {
+      const url = new URL(window.location);
+      url.searchParams.set("certId", certId);
+      window.history.replaceState(null, "", url);
+    }
     verifyStatus.textContent = "Fetching certifications...";
     verifyStatus.className = "cert-verify-status loading";
     verifyOwner.textContent = "";
@@ -1397,7 +1373,7 @@
     if (pageEl) pageEl.classList.add("pf-m-sidebar-expanded");
     if (isMobile() && backdrop) backdrop.classList.add("visible");
     localStorage.setItem("sidebar_expanded", "true");
-    setTimeout(renderMap, 50);
+    setTimeout(buildMap, 50);
   }
 
   function closeSidebar() {
@@ -1405,7 +1381,7 @@
     if (pageEl) pageEl.classList.remove("pf-m-sidebar-expanded");
     if (backdrop) backdrop.classList.remove("visible");
     localStorage.setItem("sidebar_expanded", "false");
-    setTimeout(renderMap, 50);
+    setTimeout(buildMap, 50);
   }
 
   if (navToggleBtn) {
@@ -1438,7 +1414,7 @@
   // ── Init ──────────────────────────────────────────────────────────────────
 
   renderExamList();
-  renderMap();
+  buildMap();
 
   // Auto-verify if cert ID is provided in URL (e.g. ?certId=140-255-795)
   const urlParams = new URLSearchParams(window.location.search);
