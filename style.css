@@ -573,6 +573,10 @@ html:not(.pf-v6-theme-dark) .cert-input {
     font-weight: 600;
 }
 
+.level-label.architect.achieved {
+    fill: #b8860b;
+}
+
 .level-label.partial {
     fill: var(--pf-t--global--color--status--warning--default);
     font-weight: 500;
@@ -613,6 +617,12 @@ html:not(.pf-v6-theme-dark) .cert-input {
     animation: badgeGlow 2.5s ease-in-out infinite;
 }
 
+.level-node.meta.architect.achieved {
+    fill: #d4a017;
+    stroke: #b8860b;
+    animation: badgeGlowGold 2.5s ease-in-out infinite;
+}
+
 .level-node.meta.not-achieved {
     fill: var(--pf-t--global--background--color--primary--default);
     stroke: var(--pf-t--global--border--color--default);
@@ -638,6 +648,29 @@ html:not(.pf-v6-theme-dark) .cert-input {
     100% {
         fill: #ee0000;
         filter: drop-shadow(0 0 2px rgba(238, 0, 0, 0.3));
+    }
+}
+
+@keyframes badgeGlowGold {
+    0% {
+        fill: #d4a017;
+        filter: drop-shadow(0 0 2px rgba(212, 160, 23, 0.3));
+    }
+    25% {
+        fill: #e6b422;
+        filter: drop-shadow(0 0 6px rgba(230, 180, 34, 0.6));
+    }
+    50% {
+        fill: #ffd700;
+        filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+    }
+    75% {
+        fill: #e6b422;
+        filter: drop-shadow(0 0 6px rgba(230, 180, 34, 0.6));
+    }
+    100% {
+        fill: #d4a017;
+        filter: drop-shadow(0 0 2px rgba(212, 160, 23, 0.3));
     }
 }
 

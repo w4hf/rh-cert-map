@@ -553,6 +553,7 @@
           circle.setAttribute("d", createBadgeOutline(cx, cy, s.nodeRadius + 2));
           circle.setAttribute("stroke-width", "2");
           circle.classList.add("level-node", "meta");
+          if (node.id === "architect") circle.classList.add("architect");
         } else {
           circle = document.createElementNS(SVG_NS, "circle");
           circle.setAttribute("cx", cx);
@@ -626,6 +627,7 @@
         text.setAttribute("x", cx);
         text.setAttribute("y", labelY);
         text.classList.add("level-label");
+        if (node.id === "architect") text.classList.add("architect");
 
         const words = node.name.split(" ");
         if (words.length > 1) {
