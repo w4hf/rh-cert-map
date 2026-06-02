@@ -404,12 +404,12 @@
     const narrow = window.innerWidth <= 600;
     return {
       nodeRadius: narrow ? 10 : 14,
-      rowHeight: narrow ? 170 : 195,
+      rowHeight: narrow ? 260 : 300,
       paddingLeft: narrow ? 50 : 70,
       paddingRight: narrow ? 50 : 70,
       upperY: narrow ? 28 : 35,
-      lowerY: narrow ? 100 : 120,
-      centerY: narrow ? 60 : 74,
+      lowerY: narrow ? 120 : 145,
+      centerY: narrow ? 70 : 88,
       labelOffsetY: narrow ? 18 : 20,
       checkScale: narrow ? 0.7 : 1,
       arrowSize: narrow ? 4 : 5,
@@ -477,21 +477,45 @@
       const gap = maxCol > 0 ? usable / maxCol : 0;
       const svgWidth = containerWidth;
 
-      const hasTwoRows = nodes.some((n) => n.row === "upper") && nodes.some((n) => n.row === "lower");
-      const svgHeight = hasTwoRows ? s.rowHeight : (s.centerY + s.labelOffsetY + 50);
-
-      const svg = document.createElementNS(SVG_NS, "svg");
-      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
-      svg.setAttribute("height", svgHeight);
-      svg.setAttribute("role", "img");
-      svg.setAttribute("aria-label", `${product.name} certification track`);
-
       const nodePositions = {};
       nodes.forEach((node) => {
         const cx = s.paddingLeft + node.col * gap;
         const cy = getNodeY(node, s);
         nodePositions[node.id] = { cx, cy };
       });
+
+      // Place convergence targets at the midpoint of their source nodes,
+      // then offset same-column lower-row nodes to maintain equal spacing
+      const incomingMap = {};
+      product.edges.forEach(([fromId, toId]) => {
+        if (!incomingMap[toId]) incomingMap[toId] = [];
+        incomingMap[toId].push(fromId);
+      });
+      const rowGap = s.lowerY - s.upperY;
+      for (const [nodeId, sources] of Object.entries(incomingMap)) {
+        if (sources.length >= 2) {
+          const avgY = sources.reduce((sum, srcId) => sum + nodePositions[srcId].cy, 0) / sources.length;
+          nodePositions[nodeId].cy = avgY;
+
+          const node = nodes.find((n) => n.id === nodeId);
+          if (node) {
+            const sameColLower = nodes.find((n) => n.col === node.col && n.row === "lower" && n.id !== nodeId);
+            if (sameColLower && nodePositions[sameColLower.id]) {
+              nodePositions[sameColLower.id].cy = avgY + rowGap;
+            }
+          }
+        }
+      }
+
+      // Compute SVG height to tightly fit content
+      const maxNodeY = Math.max(...Object.values(nodePositions).map((p) => p.cy));
+      const svgHeight = maxNodeY + s.nodeRadius + s.labelOffsetY + 30;
+
+      const svg = document.createElementNS(SVG_NS, "svg");
+      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+      svg.setAttribute("height", svgHeight);
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", `${product.name} certification track`);
 
       const productRef = { edges: [], nodes: {} };
 
