@@ -33,12 +33,13 @@
     {
       name: "OpenShift",
       nodes: [
-        { id: "tech", name: "Technologist", col: 0, row: "center", type: "credential", rule: { type: "any", codes: ["EX180", "EX156"] }, hint: "Pass EX180 or EX156" },
+        { id: "tech", name: "Technologist", col: 0, row: "upper", type: "credential", rule: { type: "all", codes: ["EX180"] }, hint: "Pass EX180 — Red Hat Certified Technologist in OpenShift" },
+        { id: "techvirt", name: "Technologist in OpenShift Virtualization", col: 0, row: "lower", type: "credential", rule: { type: "all", codes: ["EX156"] }, hint: "Pass EX156 — Red Hat Certified Technologist in OpenShift Virtualization" },
         { id: "sysadm", name: "System Administrator", col: 1, row: "upper", type: "credential", rule: { type: "all", codes: ["EX280"] }, hint: "Pass EX280" },
         { id: "advsysadm", name: "Advanced System Administrator", col: 1, row: "lower", type: "credential", rule: { type: "all", codes: ["EX380"] }, hint: "Pass EX380" },
-        { id: "engineer", name: "Engineer", col: 2, row: "upper", type: "meta", rule: { type: "meta", requires: ["sysadm", "advsysadm"] }, hint: "Achieve System Administrator + Advanced System Administrator" },
+        { id: "engineer", name: "Engineer", col: 2, row: "upper", type: "meta", rule: { type: "meta", requires: ["tech", "sysadm", "advsysadm"] }, hint: "Achieve Technologist in OpenShift (EX180) + System Administrator + Advanced System Administrator" },
         { id: "specialist", name: "Specialist", col: 2, row: "lower", type: "credential", rule: { type: "any", codes: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX229", "EX480"] }, hint: "Pass any specialist exam" },
-        { id: "architect", name: "Architect", col: 3, row: "center", type: "meta", rule: { type: "metaPlus", requires: ["engineer"], specialist: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX229", "EX480"], minSpecialist: 3 }, hint: "Achieve Engineer + pass at least 3 specialist exams" },
+        { id: "architect", name: "Architect", col: 3, row: "center", type: "meta", rule: { type: "metaPlus", requires: ["engilab start compreview-reviewneer", "tech"], specialist: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX229", "EX480"], minSpecialist: 3 }, hint: "Achieve Technologist in OpenShift (EX180), Engineer, and at least 3 specialist exams" },
       ],
       edges: [
         ["tech", "sysadm"], ["tech", "advsysadm"],
