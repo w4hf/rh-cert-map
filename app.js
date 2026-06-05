@@ -913,9 +913,11 @@
   // ── Certification Verification ──────────────────────────────────────────
 
   const CORS_PROXIES = [
+    (url) => "https://cors-bridge.com/api/proxy?url=" + encodeURIComponent(url),
+    (url) => "https://cors.dev/" + url,
+    (url) => "https://corsfix.com/proxy?" + encodeURIComponent(url),
     (url) => "https://corsproxy.io/?url=" + encodeURIComponent(url),
     (url) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
-    (url) => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url),
   ];
   const VERIFY_URL = "https://rhtapps.redhat.com/verify/?certId=";
 
@@ -932,11 +934,16 @@
     }
 
     const target = VERIFY_URL + id;
-    const controller = new AbortController();
+    const TIMEOUT_MS = 15000;
+    const controllers = [];
 
-    const attempts = CORS_PROXIES.map((buildUrl) =>
-      fetch(buildUrl(target), { signal: controller.signal })
+    const attempts = CORS_PROXIES.map((buildUrl) => {
+      const ctrl = new AbortController();
+      controllers.push(ctrl);
+      const timeoutId = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+      return fetch(buildUrl(target), { signal: ctrl.signal })
         .then((resp) => {
+          clearTimeout(timeoutId);
           if (!resp.ok) return Promise.reject(new Error("not ok"));
           return resp.text();
         })
@@ -944,12 +951,16 @@
           if (!text || text.length <= 200) return Promise.reject(new Error("too short"));
           return text;
         })
-    );
+        .catch((err) => {
+          clearTimeout(timeoutId);
+          return Promise.reject(err);
+        });
+    });
 
     let html;
     try {
       html = await Promise.any(attempts);
-      controller.abort();
+      controllers.forEach((c) => c.abort());
     } catch {
       throw new Error("Failed to reach verification service (all proxies failed)");
     }
