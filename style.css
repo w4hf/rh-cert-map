@@ -133,6 +133,41 @@ body {
     margin-right: 1rem;
 }
 
+.masthead-links {
+    position: relative;
+    display: inline-flex;
+}
+
+.masthead-links-menu {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    min-width: 16rem;
+    max-width: min(22rem, calc(100vw - 1.5rem));
+    padding: var(--pf-t--global--spacer--xs) 0;
+    background-color: var(--pf-t--global--background--color--primary--default);
+    border: 1px solid var(--pf-t--global--border--color--default);
+    border-radius: var(--pf-t--global--border--radius--md);
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.25);
+    z-index: var(--z-tooltip);
+}
+
+.masthead-links-item {
+    display: block;
+    padding: 0.5rem 0.85rem;
+    color: var(--pf-t--global--text--color--regular);
+    text-decoration: none;
+    font-size: var(--pf-t--global--font--size--body--sm);
+    line-height: 1.35;
+}
+
+.masthead-links-item:hover,
+.masthead-links-item:focus-visible {
+    background-color: var(--pf-t--global--background--color--secondary--default);
+    color: var(--pf-t--global--text--color--link--default);
+    outline: none;
+}
+
 /* ===========================================
    SIDEBAR
    =========================================== */

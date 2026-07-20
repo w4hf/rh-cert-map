@@ -879,6 +879,35 @@
     resizeTimer = setTimeout(buildMap, 150);
   });
 
+  // ── Links menu ──────────────────────────────────────────────────────────
+
+  const linksWrap = document.getElementById("links-menu-wrap");
+  const linksToggle = document.getElementById("links-toggle");
+  const linksMenu = document.getElementById("links-menu");
+
+  function setLinksMenuOpen(open) {
+    if (!linksToggle || !linksMenu) return;
+    linksToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    linksMenu.classList.toggle("hidden", !open);
+    linksMenu.hidden = !open;
+  }
+
+  if (linksToggle && linksMenu && linksWrap) {
+    linksToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const open = linksToggle.getAttribute("aria-expanded") !== "true";
+      setLinksMenuOpen(open);
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!linksWrap.contains(e.target)) setLinksMenuOpen(false);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setLinksMenuOpen(false);
+    });
+  }
+
   // ── Theme Toggle (PF6 pattern) ──────────────────────────────────────────
 
   const THEME_KEY = "redhat-cert-map-theme";
