@@ -11,6 +11,7 @@ assignees: w4hf
 A clear and concise description of what the bug is.
 
 **Cert ID**
+Cert ID =  ###-###-###
 Please include your cert ID so that we can reproduce and troubleshoot the bug.
 No cert ID = not possible to resolve the issue.
 
