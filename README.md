@@ -6,6 +6,13 @@ A client-side web app that helps Red Hat certified professionals visualize their
 
 Access the webapp at [https://w4hf.github.io/rh-cert-map/](https://w4hf.github.io/rh-cert-map/) or clone it and open `index.html` locally on your machine.
 
+### Important !
+if your browser still loads the old page, or if the page is not rendered correctly, force refresh your webpage by pressing :
+- Firefox: Ctrl + Shift + R (PC) or Command + Shift + R (Mac)
+- Chrome: Shift + F5 (PC) or Command + Shift + R (Mac)
+- Edge: Ctrl + Shift + R (PC) or Command + Shift + R (Mac)
+- Safari: Command + Option + R (Mac)
+
 ## Features
 
 - **Interactive certification map** with five horizontal arrow tracks showing levels from Technologist/Developer up to Architect
