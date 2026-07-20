@@ -4,7 +4,7 @@ A client-side web app that helps Red Hat certified professionals visualize their
 
 ## Live Website
 
-Access the webapp at [https://rh-cert-map.wasmer.app](https://w4hf.github.io/rh-cert-map/) or clone it and open `index.html` locally on your machine.
+Access the webapp at [https://w4hf.github.io/rh-cert-map/](https://w4hf.github.io/rh-cert-map/) or clone it and open `index.html` locally on your machine.
 
 ## Features
 
