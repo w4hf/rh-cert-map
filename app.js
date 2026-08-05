@@ -37,8 +37,8 @@
         { id: "sysadm", name: "System Administrator", col: 1, row: "upper", type: "credential", rule: { type: "all", codes: ["EX280"] }, hint: "Pass EX280" },
         { id: "advsysadm", name: "Advanced System Administrator", col: 1, row: "lower", type: "credential", rule: { type: "all", codes: ["EX380"] }, hint: "Pass EX380" },
         { id: "engineer", name: "Engineer", col: 2, row: "upper", type: "meta", rule: { type: "meta", requires: ["sysadm", "advsysadm"] }, hint: "Achieve System Administrator + Advanced System Administrator" },
-        { id: "specialist", name: "Specialist", col: 2, row: "lower", type: "credential", rule: { type: "any", codes: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX229", "EX480"] }, hint: "Pass any specialist exam" },
-        { id: "architect", name: "Architect", col: 3, row: "center", type: "meta", rule: { type: "metaPlus", requires: ["engineer"], specialist: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX229", "EX480"], minSpecialist: 3 }, hint: "Achieve Engineer + pass at least 3 specialist exams" },
+        { id: "specialist", name: "Specialist", col: 2, row: "lower", type: "credential", rule: { type: "any", codes: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX282", "EX229", "EX480"] }, hint: "Pass any specialist exam" },
+        { id: "architect", name: "Architect", col: 3, row: "center", type: "meta", rule: { type: "metaPlus", requires: ["engineer"], specialist: ["EX316", "EX336", "EX370", "EX430", "EX432", "EX282", "EX229", "EX480"], minSpecialist: 3 }, hint: "Achieve Engineer + pass at least 3 specialist exams" },
       ],
       edges: [
         ["tech", "sysadm"], ["tech", "advsysadm"],
@@ -55,6 +55,7 @@
         { code: "EX370", name: "Red Hat Certified Specialist in OpenShift Data Foundation" },
         { code: "EX430", name: "Red Hat Certified Specialist in OpenShift Advanced Cluster Security" },
         { code: "EX432", name: "Red Hat Certified Specialist in OpenShift Advanced Cluster Management" },
+        { code: "EX282", name: "Red Hat Certified Specialist in OpenShift Networking" },
         { code: "EX229", name: "Red Hat Certified Specialist in ROSA (Retired)" },
         { code: "EX480", name: "Red Hat Certified Specialist in MultiCluster Management (Retired)" },
       ],
