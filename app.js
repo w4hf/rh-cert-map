@@ -943,11 +943,11 @@
   // ── Certification Verification ──────────────────────────────────────────
 
   const CORS_PROXIES = [
-    (url) => "https://cors-bridge.com/api/proxy?url=" + encodeURIComponent(url),
-    (url) => "https://cors.dev/" + url,
-    (url) => "https://corsfix.com/proxy?" + encodeURIComponent(url),
-    (url) => "https://corsproxy.io/?key=8a7b7619&url=" + encodeURIComponent(url),
-    (url) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+    { url: (u) => "https://cors-bridge.com/api/proxy?url=" + encodeURIComponent(u) },
+    { url: (u) => "https://cors.dev/" + u.replace(/^https?:\/\//, "") },
+    { url: (u) => "https://corsfix.com/proxy?" + u, headers: { "x-corsfix-key": "cfx_a9c0a6041e3ee6a75677706723992c60" } },
+    { url: (u) => "https://corsproxy.io/?key=8a7b7619&url=" + encodeURIComponent(u) },
+    { url: (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u) },
   ];
   const VERIFY_URL = "https://rhtapps.redhat.com/verify/?certId=";
 
@@ -967,11 +967,13 @@
     const TIMEOUT_MS = 15000;
     const controllers = [];
 
-    const attempts = CORS_PROXIES.map((buildUrl) => {
+    const attempts = CORS_PROXIES.map((proxy) => {
       const ctrl = new AbortController();
       controllers.push(ctrl);
       const timeoutId = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
-      return fetch(buildUrl(target), { signal: ctrl.signal })
+      const opts = { signal: ctrl.signal };
+      if (proxy.headers) opts.headers = proxy.headers;
+      return fetch(proxy.url(target), opts)
         .then((resp) => {
           clearTimeout(timeoutId);
           if (!resp.ok) return Promise.reject(new Error("not ok"));
