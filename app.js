@@ -946,7 +946,7 @@
     (url) => "https://cors-bridge.com/api/proxy?url=" + encodeURIComponent(url),
     (url) => "https://cors.dev/" + url,
     (url) => "https://corsfix.com/proxy?" + encodeURIComponent(url),
-    (url) => "https://corsproxy.io/?url=" + encodeURIComponent(url),
+    (url) => "https://corsproxy.io/?key=8a7b7619&url=" + encodeURIComponent(url),
     (url) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
   ];
   const VERIFY_URL = "https://rhtapps.redhat.com/verify/?certId=";
