@@ -943,9 +943,7 @@
   // ── Certification Verification ──────────────────────────────────────────
 
   const CORS_PROXIES = [
-    { url: (u) => "https://cors-bridge.com/api/proxy?url=" + encodeURIComponent(u) },
-    { url: (u) => "https://cors.dev/" + u.replace(/^https?:\/\//, "") },
-    { url: (u) => "https://corsfix.com/proxy?" + u, headers: { "x-corsfix-key": "cfx_a9c0a6041e3ee6a75677706723992c60" } },
+    { url: (u) => "https://proxy.corsfix.com/?url=" + encodeURIComponent(u) },
     { url: (u) => "https://corsproxy.io/?key=8a7b7619&url=" + encodeURIComponent(u) },
     { url: (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u) },
   ];
