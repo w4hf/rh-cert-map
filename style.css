@@ -4,40 +4,18 @@
 
 :root {
     --masthead-height: 56px;
-    --sidebar-width: 320px;
+    --sidebar-width: var(--desktop-sidebar-width, 320px);
     --z-dropdown: 1000;
     --z-sidebar: 1035;
     --z-masthead: 1040;
     --z-tooltip: 1070;
-    --color-partial: #e67e22;
-    --color-fresh: #28a745;
-    --color-expired: #dc3545;
-}
-
-/* Light mode color overrides */
-html:not(.pf-v6-theme-dark) {
-    --pf-t--global--background--color--primary--default: #ffffff;
-    --pf-t--global--background--color--secondary--default: #f2f2f2;
-    --pf-t--global--text--color--regular: #000000;
-    --pf-t--global--text--color--subtle: #555555;
-    --pf-t--global--text--color--link--default: #ee0000;
-    --pf-t--global--border--color--default: #d2d2d2;
-    --pf-t--global--color--status--success--default: #28a745;
-    --pf-t--global--color--status--warning--default: #e67e22;
-    --pf-t--global--color--status--danger--default: #dc3545;
-}
-
-/* Dark mode color overrides */
-html.pf-v6-theme-dark {
-    --pf-t--global--background--color--primary--default: #292929;
-    --pf-t--global--background--color--secondary--default: #000000;
-    --pf-t--global--text--color--regular: #ffffff;
-    --pf-t--global--text--color--subtle: #aaaaaa;
-    --pf-t--global--text--color--link--default: #ee0000;
-    --pf-t--global--border--color--default: #444444;
-    --pf-t--global--color--status--success--default: #2ecc71;
-    --pf-t--global--color--status--warning--default: #f39c12;
-    --pf-t--global--color--status--danger--default: #e74c3c;
+    --color-partial: var(--pf-t--global--color--status--warning--default);
+    --color-fresh: var(--pf-t--global--color--status--success--default);
+    --color-expired: var(--pf-t--global--color--status--danger--default);
+    --pf-t--global--background--image--glass: url("https://unpkg.com/@patternfly/patternfly@6.7.0/assets/images/PF-Bkg-Generic-Light.svg");
+    --pf-t--global--background--image--glass--dark: url("https://unpkg.com/@patternfly/patternfly@6.7.0/assets/images/PF-Bkg-Generic-Dark.svg");
+    --pf-t--global--background--image--felt--glass: url("https://unpkg.com/@patternfly/patternfly@6.7.0/assets/images/Felt-Bkg-Generic-Light.svg");
+    --pf-t--global--background--image--felt--glass--dark: url("https://unpkg.com/@patternfly/patternfly@6.7.0/assets/images/Felt-Bkg-Generic-Dark.svg");
 }
 
 /* ===========================================
@@ -127,6 +105,11 @@ body {
     justify-content: flex-end;
 }
 
+.pf-v6-c-masthead__content > .pf-v6-l-flex {
+    flex-wrap: nowrap;
+    gap: 0;
+}
+
 .pf-v6-c-masthead__toggle {
     display: inline-flex;
     margin-left: 1rem;
@@ -147,7 +130,7 @@ body {
     padding: var(--pf-t--global--spacer--xs) 0;
     background-color: var(--pf-t--global--background--color--primary--default);
     border: 1px solid var(--pf-t--global--border--color--default);
-    border-radius: var(--pf-t--global--border--radius--md);
+    border-radius: var(--pf-t--global--border--radius--medium);
     box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.25);
     z-index: var(--z-tooltip);
 }
@@ -166,6 +149,45 @@ body {
     background-color: var(--pf-t--global--background--color--secondary--default);
     color: var(--pf-t--global--text--color--link--default);
     outline: none;
+}
+
+.theme-menu-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.theme-menu {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    width: 15rem;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100dvh - var(--masthead-height) - 1rem);
+    overflow-y: auto;
+    z-index: var(--z-dropdown);
+}
+
+.theme-menu[hidden] {
+    display: none;
+}
+
+.theme-menu .pf-v6-c-menu__item-select-icon {
+    visibility: hidden;
+}
+
+.theme-menu [aria-checked="true"] .pf-v6-c-menu__item-select-icon {
+    visibility: visible;
+}
+
+.theme-menu .pf-v6-c-menu__item:focus-visible {
+    outline: var(--pf-t--global--border--width--strong) solid var(--pf-t--global--color--brand--default);
+    outline-offset: -2px;
+}
+
+.theme-system-note {
+    padding: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md);
+    font-size: var(--pf-t--global--font--size--body--sm);
+    color: var(--pf-t--global--text--color--subtle);
 }
 
 /* ===========================================
@@ -212,6 +234,53 @@ body {
     margin-right: var(--pf-t--global--spacer--md);
 }
 
+.sidebar-resizer {
+    display: none;
+    position: fixed;
+    top: var(--masthead-height);
+    bottom: 1.5rem;
+    left: var(--sidebar-width);
+    width: 12px;
+    transform: translateX(-50%);
+    z-index: var(--z-sidebar);
+    cursor: col-resize;
+    touch-action: none;
+    user-select: none;
+}
+
+.cert-map-page.pf-m-sidebar-expanded .sidebar-resizer {
+    display: block;
+}
+
+.sidebar-resizer::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    width: 4px;
+    height: 40px;
+    transform: translateY(-50%);
+    border-radius: var(--pf-t--global--border--radius--small);
+    background-color: var(--pf-t--global--border--color--default);
+}
+
+.sidebar-resizer:hover::after,
+.sidebar-resizer:focus-visible::after,
+.is-resizing-sidebar .sidebar-resizer::after {
+    background-color: var(--pf-t--global--color--brand--default);
+}
+
+.sidebar-resizer:focus-visible {
+    outline: 2px solid var(--pf-t--global--color--brand--default);
+    outline-offset: -2px;
+}
+
+.is-resizing-sidebar,
+.is-resizing-sidebar * {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
 /* ===========================================
    MAIN CONTENT
    =========================================== */
@@ -237,6 +306,60 @@ body {
 
 .pf-v6-c-page__main-section {
     background-color: inherit;
+}
+
+/* Extend PatternFly's glass surfaces to this app's custom page layout. */
+.pf-v6-theme-glass .cert-map-page {
+    --pf-v6-c-page__sidebar--MarginBlockStart: 0px;
+    background-image: var(--pf-t--global--background--image--default);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.pf-v6-theme-glass .cert-map-page .pf-v6-c-masthead,
+.pf-v6-theme-glass .cert-map-page .pf-v6-c-page__sidebar {
+    background-color: var(--pf-t--global--background--color--floating--default);
+    box-shadow: var(--pf-t--global--box-shadow--glass--default);
+}
+
+.pf-v6-theme-glass .cert-map-page .pf-v6-c-page__sidebar {
+    top: calc(var(--masthead-height) + var(--pf-t--global--spacer--sm));
+    bottom: var(--pf-t--global--spacer--sm);
+    left: var(--pf-t--global--spacer--sm);
+    width: calc(var(--sidebar-width) - 2 * var(--pf-t--global--spacer--sm));
+    min-width: 0;
+    border-radius: var(--pf-t--global--border--radius--glass--default);
+}
+
+.pf-v6-theme-glass .pf-v6-c-page__sidebar::after {
+    display: none;
+}
+
+.pf-v6-theme-glass .sidebar-resizer {
+    top: calc(var(--masthead-height) + var(--pf-t--global--spacer--sm) + var(--pf-v6-c-page__sidebar--MarginBlockStart));
+    left: calc(var(--sidebar-width) - var(--pf-t--global--spacer--sm) / 2);
+}
+
+.pf-v6-theme-glass .cert-map-page .pf-v6-c-page__main {
+    margin-top: calc(var(--pf-t--global--spacer--sm) + var(--pf-v6-c-page__sidebar--MarginBlockStart));
+    background-color: var(--pf-t--global--background--color--glass--primary--default);
+    backdrop-filter: var(--pf-t--global--background--filter--glass--blur--primary);
+    border: var(--pf-t--global--border--width--glass--default) solid var(--pf-t--global--border--color--glass--default);
+    box-shadow: var(--pf-t--global--box-shadow--glass--default);
+}
+
+.pf-v6-theme-glass .cert-map-page .pf-v6-c-page__main-section {
+    background-color: transparent;
+}
+
+.pf-v6-theme-high-contrast .cert-map-page .pf-v6-c-masthead {
+    border-bottom: var(--pf-t--global--border--width--high-contrast--regular) solid var(--pf-t--global--border--color--high-contrast);
+}
+
+.pf-v6-theme-high-contrast .cert-map-page .pf-v6-c-page__main,
+.pf-v6-theme-high-contrast .cert-map-page .pf-v6-c-page__sidebar {
+    border: var(--pf-t--global--border--width--high-contrast--regular) solid var(--pf-t--global--border--color--high-contrast);
 }
 
 /* ===========================================
@@ -286,17 +409,11 @@ body {
     font-size: var(--pf-t--global--font--size--body--default);
     color: var(--pf-t--global--text--color--regular);
     background-color: var(--pf-t--global--background--color--control--default);
-    border: 1px solid var(--pf-t--global--border--color--default);
-    border-radius: var(--pf-t--global--border--radius--small);
+    border: 1px solid var(--pf-t--global--border--color--control--default);
+    border-radius: var(--pf-t--global--border--radius--control--default);
     transition: border-color 200ms ease, box-shadow 200ms ease;
     box-sizing: border-box;
     outline: none;
-}
-
-html:not(.pf-v6-theme-dark) .cert-input {
-    background-color: #fff;
-    border-color: #6a6e73;
-    color: #151515;
 }
 
 .cert-input:focus {
@@ -402,7 +519,9 @@ html:not(.pf-v6-theme-dark) .cert-input {
 }
 
 .cert-view-btn.active {
-    color: var(--pf-t--global--text--color--link--default);
+    --pf-v6-c-button--m-plain--Color: #ee0000;
+    --pf-v6-c-button--m-plain--hover--Color: #ee0000;
+    --pf-v6-c-button--m-plain--m-clicked--Color: #ee0000;
 }
 
 .sidebar-search-row {
@@ -613,7 +732,7 @@ html:not(.pf-v6-theme-dark) .cert-input {
 }
 
 .level-label.partial {
-    fill: var(--pf-t--global--color--status--warning--default);
+    fill: var(--pf-t--global--text--color--status--warning--default);
     font-weight: 500;
 }
 
@@ -697,6 +816,24 @@ html:not(.pf-v6-theme-dark) .cert-input {
 
 .meta-badge-icon {
     pointer-events: none;
+}
+
+.pf-v6-theme-high-contrast .level-node.achieved {
+    fill: var(--pf-t--global--color--brand--default);
+    stroke: var(--pf-t--global--border--color--default);
+    animation: none;
+}
+
+.pf-v6-theme-high-contrast .level-label.achieved {
+    fill: var(--pf-t--global--text--color--regular);
+}
+
+.pf-v6-theme-high-contrast .level-connector.achieved {
+    stroke: var(--pf-t--global--border--color--default);
+}
+
+.pf-v6-theme-high-contrast .arrowhead.achieved {
+    fill: var(--pf-t--global--border--color--default);
 }
 
 h1.pf-v6-c-title {
@@ -834,12 +971,12 @@ h1.pf-v6-c-title {
 
 .date-fresh {
     background: var(--color-fresh);
-    color: #fff;
+    color: var(--pf-t--global--text--color--status--on-success--default);
 }
 
 .date-expired {
     background: var(--color-expired);
-    color: #fff;
+    color: var(--pf-t--global--text--color--status--on-danger--default);
 }
 
 /* ===========================================
@@ -858,18 +995,22 @@ h1.pf-v6-c-title {
 
 .expires-critical {
     background: var(--color-expired);
+    color: var(--pf-t--global--text--color--status--on-danger--default);
 }
 
 .expires-warning {
     background: var(--color-partial);
+    color: var(--pf-t--global--text--color--status--on-warning--default);
 }
 
 .expires-healthy {
     background: var(--color-fresh);
+    color: var(--pf-t--global--text--color--status--on-success--default);
 }
 
 .expires-expired {
     background: var(--pf-t--global--text--color--subtle);
+    color: var(--pf-t--global--background--color--primary--default);
 }
 
 .expires-unknown {
@@ -911,15 +1052,23 @@ h1.pf-v6-c-title {
     z-index: calc(var(--z-sidebar) - 1);
 }
 
-.sidebar-backdrop.visible {
-    display: block;
-}
-
 /* ===========================================
    RESPONSIVE
    =========================================== */
 
 @media (max-width: 992px) {
+    .sidebar-backdrop.visible {
+        display: block;
+    }
+
+    :root {
+        --sidebar-width: 320px;
+    }
+
+    .cert-map-page.pf-m-sidebar-expanded .sidebar-resizer {
+        display: none;
+    }
+
     .pf-v6-c-masthead__toggle {
         display: flex;
     }
@@ -971,6 +1120,23 @@ h1.pf-v6-c-title {
 @media (max-width: 576px) {
     :root {
         --sidebar-width: 280px;
+    }
+
+    .cert-map-page .pf-v6-c-masthead {
+        padding-inline: var(--pf-t--global--spacer--sm);
+    }
+
+    .pf-v6-c-masthead__toggle {
+        margin-inline: 0;
+    }
+
+    .pf-v6-c-masthead__main {
+        gap: 0;
+    }
+
+    .masthead-logo {
+        width: 28px;
+        height: 28px;
     }
 
     .cert-map-page .pf-v6-c-page__main {

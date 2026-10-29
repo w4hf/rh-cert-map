@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Red Hat Certification Map</title>
   <link rel="icon" type="image/png" href="redhat-favicon.png">
-  <script>(function(){var t=null;try{t=localStorage.getItem('redhat-cert-map-theme');}catch(e){}var d;if(t==='dark')d=true;else if(t==='light')d=false;else d=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches;if(d){document.documentElement.classList.add('pf-v6-theme-dark');document.documentElement.setAttribute('data-theme','dark');}else{document.documentElement.classList.remove('pf-v6-theme-dark');document.documentElement.setAttribute('data-theme','light');}})();</script>
-  <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@6.4.0/patternfly.min.css" integrity="sha384-N3ZPc5bcsHYetozTiTDhKR5Y22G41thR1xe6i33nRwrRWKeqA8xUf2KIqPhDLGkH" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@6.4.0/patternfly-addons.css" integrity="sha384-SwrXvVGdTLV+csH7h+LHx2xLxXvc4jnr7YRDo4ZaBSUhC/JCn+MgiOOhCAvGQrjE" crossorigin="anonymous">
+  <script src="theme.js?v=10"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@6.7.0/patternfly.min.css" integrity="sha384-28vRE4burp56l7D+9xOCp2yNSXfHATyKPCGfLsGJ2XgYH8DCr+/xclm7vATbATKs" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@6.7.0/patternfly-addons.css" integrity="sha384-d26dbgfv7+IUx/H7xi6OZxJiLQomdu69VMINOKkNoKXm320+oMChoMiEQR2p+AQR" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g" crossorigin="anonymous">
   <script>
     (function() {
@@ -47,11 +47,11 @@
             <i class="fas fa-bars"></i>
           </button>
         </span>
-        <a class="pf-v6-c-masthead__brand pf-v6-l-flex pf-m-align-items-center pf-m-gap-sm pf-v6-u-text-decoration-none" href="#">
+        <a class="pf-v6-c-masthead__brand pf-v6-l-flex pf-m-align-items-center pf-m-gap-sm" href="#">
           <img src="redhat-favicon.png" alt="Red Hat" class="masthead-logo" width="36" height="36">
           <div class="pf-v6-l-stack">
-            <span class="pf-v6-c-title pf-m-md pf-v6-u-color-100">Certification</span>
-            <span class="pf-v6-u-color-200 pf-v6-u-font-size-xs">Map</span>
+            <span class="pf-v6-c-title pf-m-md pf-v6-u-text-color-regular">Certification</span>
+            <span class="pf-v6-u-text-color-subtle pf-v6-u-font-size-xs">Map</span>
           </div>
         </a>
       </div>
@@ -74,9 +74,103 @@
           <a class="pf-v6-c-button pf-m-plain" href="https://github.com/w4hf/rh-cert-map" target="_blank" rel="noopener noreferrer" title="GitHub repository" aria-label="GitHub repository">
             <i class="fab fa-github"></i>
           </a>
-          <button class="pf-v6-c-button pf-m-plain" type="button" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
-            <i class="fas fa-sun" id="theme-toggle-icon"></i>
-          </button>
+          <div class="theme-menu-wrap" id="theme-menu-wrap">
+            <button class="pf-v6-c-button pf-m-plain" type="button" id="theme-toggle" title="Appearance" aria-label="Appearance" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-menu">
+              <i class="fas fa-palette" aria-hidden="true"></i>
+            </button>
+            <div class="pf-v6-c-menu theme-menu" id="theme-menu" role="menu" aria-label="Appearance" hidden>
+              <section class="pf-v6-c-menu__group" role="group" aria-labelledby="theme-theme-heading">
+                <h2 class="pf-v6-c-menu__group-title" id="theme-theme-heading">Theme</h2>
+                <ul class="pf-v6-c-menu__list" role="presentation">
+                  <li class="pf-v6-c-menu__list-item" role="presentation">
+                    <button class="pf-v6-c-menu__item" type="button" role="menuitemradio" aria-checked="true" tabindex="-1" data-appearance="theme" data-value="default">
+                      <span class="pf-v6-c-menu__item-main">
+                        <span class="pf-v6-c-menu__item-text">Default</span>
+                        <span class="pf-v6-c-menu__item-select-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                      </span>
+                    </button>
+                  </li>
+                  <li class="pf-v6-c-menu__list-item" role="presentation">
+                    <button class="pf-v6-c-menu__item" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-appearance="theme" data-value="felt">
+                      <span class="pf-v6-c-menu__item-main">
+                        <span class="pf-v6-c-menu__item-text">Project Felt</span>
+                        <span class="pf-v6-c-menu__item-select-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                      </span>
+                    </button>
+                  </li>
+                </ul>
+              </section>
+              <hr class="pf-v6-c-divider" role="separator">
+              <section class="pf-v6-c-menu__group" role="group" aria-labelledby="theme-colorScheme-heading">
+                <h2 class="pf-v6-c-menu__group-title" id="theme-colorScheme-heading">Color scheme</h2>
+                <ul class="pf-v6-c-menu__list" role="presentation">
+                  <li class="pf-v6-c-menu__list-item" role="presentation">
+                    <button class="pf-v6-c-menu__item" type="button" role="menuitemradio" aria-checked="true" tabindex="-1" data-appearance="colorScheme" data-value="system">
+                      <span class="pf-v6-c-menu__item-main">
+                        <span class="pf-v6-c-menu__item-text">System</span>
+                        <span class="pf-v6-c-menu__item-select-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                      </span>
+                    </button>
+                  </li>
+                  <li class="pf-v6-c-menu__list-item" role="presentation">
+                    <button class="pf-v6-c-menu__item" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-appearance="colorScheme" data-value="light">
+                      <span class="pf-v6-c-menu__item-main">
+                        <span class="pf-v6-c-menu__item-text">Light</span>
+                        <span class="pf-v6-c-menu__item-select-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                      </span>
+                    </button>
+                  </li>
+                  <li class="pf-v6-c-menu__list-item" role="presentation">
+                    <button class="pf-v6-c-menu__item" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-appearance="colorScheme" data-value="dark">
+                      <span class="pf-v6-c-menu__item-main">
+                        <span class="pf-v6-c-menu__item-text">Dark</span>
+                        <span class="pf-v6-c-menu__item-select-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                      </span>
+                    </button>
+                  </li>
+                </ul>
+              </section>
+              <hr class="pf-v6-c-divider" role="separator">
+              <section class="pf-v6-c-menu__group" role="group" aria-labelledby="theme-contrast-heading">
+                <h2 class="pf-v6-c-menu__group-title" id="theme-contrast-heading">Contrast mode</h2>
+                <ul class="pf-v6-c-menu__list" role="presentation">
+                  <li class="pf-v6-c-menu__list-item" role="presentation">
+                    <button class="pf-v6-c-menu__item" type="button" role="menuitemradio" aria-checked="true" tabindex="-1" data-appearance="contrast" data-value="system">
+                      <span class="pf-v6-c-menu__item-main">
+                        <span class="pf-v6-c-menu__item-text">System</span>
+                        <span class="pf-v6-c-menu__item-select-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                      </span>
+                    </button>
+                  </li>
+                  <li class="pf-v6-c-menu__list-item" role="presentation">
+                    <button class="pf-v6-c-menu__item" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-appearance="contrast" data-value="default">
+                      <span class="pf-v6-c-menu__item-main">
+                        <span class="pf-v6-c-menu__item-text">Default</span>
+                        <span class="pf-v6-c-menu__item-select-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                      </span>
+                    </button>
+                  </li>
+                  <li class="pf-v6-c-menu__list-item" role="presentation">
+                    <button class="pf-v6-c-menu__item" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-appearance="contrast" data-value="high-contrast">
+                      <span class="pf-v6-c-menu__item-main">
+                        <span class="pf-v6-c-menu__item-text">High contrast</span>
+                        <span class="pf-v6-c-menu__item-select-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                      </span>
+                    </button>
+                  </li>
+                  <li class="pf-v6-c-menu__list-item" role="presentation">
+                    <button class="pf-v6-c-menu__item" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-appearance="contrast" data-value="glass">
+                      <span class="pf-v6-c-menu__item-main">
+                        <span class="pf-v6-c-menu__item-text">Glass</span>
+                        <span class="pf-v6-c-menu__item-select-icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                      </span>
+                    </button>
+                  </li>
+                </ul>
+              </section>
+              <p class="theme-system-note" id="theme-system-note" role="status" hidden>Glass is disabled by your system’s contrast or reduced transparency settings.</p>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -119,6 +213,12 @@
         </nav>
       </div>
     </div>
+
+    <div class="sidebar-resizer" id="sidebar-resizer" role="separator" tabindex="0"
+      aria-label="Resize exam sidebar" aria-orientation="vertical" aria-controls="page-sidebar main-content"
+      aria-valuemin="280" aria-valuemax="640" aria-valuenow="320" aria-valuetext="320 pixels"
+      aria-describedby="sidebar-resize-help" title="Drag to resize sidebar. Double-click to reset."></div>
+    <span class="pf-v6-u-screen-reader" id="sidebar-resize-help">Use Left and Right arrows to resize. Home and End set the minimum and maximum width. Escape cancels a drag.</span>
 
     <!-- Sidebar Backdrop (mobile) -->
     <div class="sidebar-backdrop" id="sidebar-backdrop"></div>

@@ -960,41 +960,6 @@
     });
   }
 
-  // ── Theme Toggle (PF6 pattern) ──────────────────────────────────────────
-
-  const THEME_KEY = "redhat-cert-map-theme";
-  const themeBtn = document.getElementById("theme-toggle");
-  const themeIcon = document.getElementById("theme-toggle-icon");
-
-  function applyTheme(theme) {
-    document.documentElement.setAttribute("data-theme", theme);
-    if (theme === "dark") {
-      document.documentElement.classList.add("pf-v6-theme-dark");
-      if (themeIcon) { themeIcon.className = "fas fa-moon"; }
-    } else {
-      document.documentElement.classList.remove("pf-v6-theme-dark");
-      if (themeIcon) { themeIcon.className = "fas fa-sun"; }
-    }
-    writeStorage(THEME_KEY, theme);
-  }
-
-  function loadTheme() {
-    try {
-      const saved = localStorage.getItem(THEME_KEY);
-      if (saved === "dark" || saved === "light") return saved;
-    } catch {
-      // Storage is unavailable; follow the system theme.
-    }
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-
-  applyTheme(loadTheme());
-
-  themeBtn.addEventListener("click", () => {
-    const current = document.documentElement.getAttribute("data-theme");
-    applyTheme(current === "dark" ? "light" : "dark");
-  });
-
   // ── Certification Verification ──────────────────────────────────────────
 
   const CORS_PROXIES = [
@@ -1439,10 +1404,126 @@
     return window.innerWidth <= 992;
   }
 
+  // ── Sidebar resizing ────────────────────────────────────────────────────
+
+  const sidebarResizer = document.getElementById("sidebar-resizer");
+  const SIDEBAR_WIDTH_KEY = "redhat-cert-map-sidebar-width";
+  const MIN_SIDEBAR_WIDTH = 280;
+  const DEFAULT_SIDEBAR_WIDTH = 320;
+  let preferredSidebarWidth = DEFAULT_SIDEBAR_WIDTH;
+  let sidebarWidth = DEFAULT_SIDEBAR_WIDTH;
+  let sidebarDrag = null;
+  let sidebarMapFrame = null;
+
+  try {
+    const savedWidth = Number(localStorage.getItem(SIDEBAR_WIDTH_KEY));
+    if (Number.isFinite(savedWidth) && savedWidth >= MIN_SIDEBAR_WIDTH) {
+      preferredSidebarWidth = Math.min(savedWidth, 640);
+    }
+  } catch {
+    // The divider also works when storage is unavailable.
+  }
+
+  function maxSidebarWidth() {
+    // Leave space for the map, including its outer margin.
+    return Math.max(MIN_SIDEBAR_WIDTH, Math.min(640, window.innerWidth - 504));
+  }
+
+  function setSidebarWidth(width) {
+    const maximum = maxSidebarWidth();
+    const nextWidth = Math.round(Math.max(MIN_SIDEBAR_WIDTH, Math.min(width, maximum)));
+    const changed = nextWidth !== sidebarWidth;
+    sidebarWidth = nextWidth;
+    document.documentElement.style.setProperty("--desktop-sidebar-width", `${sidebarWidth}px`);
+    sidebarResizer.setAttribute("aria-valuemax", String(maximum));
+    sidebarResizer.setAttribute("aria-valuenow", String(sidebarWidth));
+    sidebarResizer.setAttribute("aria-valuetext", `${sidebarWidth} pixels`);
+    if (changed && !isMobile() && sidebarMapFrame === null) {
+      sidebarMapFrame = requestAnimationFrame(() => {
+        sidebarMapFrame = null;
+        buildMap();
+      });
+    }
+  }
+
+  function saveSidebarWidth() {
+    preferredSidebarWidth = sidebarWidth;
+    writeStorage(SIDEBAR_WIDTH_KEY, String(preferredSidebarWidth));
+  }
+
+  function finishSidebarResize(commit = true) {
+    if (!sidebarDrag) return;
+    const pointerId = sidebarDrag.pointerId;
+    sidebarDrag = null;
+    document.body.classList.remove("is-resizing-sidebar");
+    if (sidebarResizer.hasPointerCapture(pointerId)) sidebarResizer.releasePointerCapture(pointerId);
+    if (commit) saveSidebarWidth();
+    else setSidebarWidth(preferredSidebarWidth);
+  }
+
+  sidebarResizer.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || !event.isPrimary || isMobile() || sidebarDrag) return;
+    event.preventDefault();
+    sidebarResizer.focus();
+    sidebarDrag = { pointerId: event.pointerId, startX: event.clientX, startWidth: sidebarWidth };
+    sidebarResizer.setPointerCapture(event.pointerId);
+    document.body.classList.add("is-resizing-sidebar");
+    hideTooltip();
+  });
+
+  sidebarResizer.addEventListener("pointermove", (event) => {
+    if (!sidebarDrag || event.pointerId !== sidebarDrag.pointerId) return;
+    setSidebarWidth(sidebarDrag.startWidth + event.clientX - sidebarDrag.startX);
+  });
+
+  sidebarResizer.addEventListener("pointerup", (event) => {
+    if (sidebarDrag?.pointerId === event.pointerId) finishSidebarResize();
+  });
+  sidebarResizer.addEventListener("pointercancel", () => finishSidebarResize(false));
+  sidebarResizer.addEventListener("lostpointercapture", () => finishSidebarResize());
+  window.addEventListener("blur", () => finishSidebarResize(false));
+
+  sidebarResizer.addEventListener("keydown", (event) => {
+    if (isMobile()) return;
+    if (event.key === "Escape" && sidebarDrag) {
+      event.preventDefault();
+      finishSidebarResize(false);
+      return;
+    }
+    if (sidebarDrag) return;
+    const step = event.shiftKey ? 48 : 16;
+    const widths = {
+      ArrowLeft: sidebarWidth - step,
+      ArrowRight: sidebarWidth + step,
+      Home: MIN_SIDEBAR_WIDTH,
+      End: maxSidebarWidth(),
+    };
+    if (!Object.hasOwn(widths, event.key)) return;
+    event.preventDefault();
+    setSidebarWidth(widths[event.key]);
+    saveSidebarWidth();
+  });
+
+  sidebarResizer.addEventListener("dblclick", () => {
+    if (isMobile()) return;
+    setSidebarWidth(DEFAULT_SIDEBAR_WIDTH);
+    saveSidebarWidth();
+  });
+
+  window.addEventListener("resize", () => {
+    finishSidebarResize(false);
+    if (!isMobile()) setSidebarWidth(preferredSidebarWidth);
+    syncNavToggle();
+    backdrop.classList.toggle("visible", isMobile() && sidebarEl.classList.contains("pf-m-expanded"));
+  });
+
+  setSidebarWidth(preferredSidebarWidth);
+
   function syncNavToggle() {
     if (!navToggleBtn || !sidebarEl) return;
     const expanded = sidebarEl.classList.contains("pf-m-expanded");
     navToggleBtn.setAttribute("aria-expanded", expanded ? "true" : "false");
+    sidebarResizer.tabIndex = expanded && !isMobile() ? 0 : -1;
   }
 
   function openSidebar() {
@@ -1455,6 +1536,7 @@
   }
 
   function closeSidebar() {
+    finishSidebarResize(false);
     if (sidebarEl) sidebarEl.classList.remove("pf-m-expanded");
     if (pageEl) pageEl.classList.remove("pf-m-sidebar-expanded");
     if (backdrop) backdrop.classList.remove("visible");
